@@ -37,8 +37,9 @@
   .searchrow{display:flex;gap:8px;margin:13px 0 0}
   .searchrow input{flex:1;margin:0;height:42px}
   .iconbtn{background:var(--sunk);border:1px solid var(--line);border-radius:10px;height:42px;
-    padding:0 13px;font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--muted);display:flex;align-items:center;gap:6px;flex:none}
+    width:44px;padding:0;font-family:var(--util);font-size:10px;color:var(--muted);
+    display:flex;align-items:center;justify-content:center;gap:3px;flex:none}
+  .iconbtn b{font-weight:400;font-size:10px}
   .iconbtn.on{color:#1B1208;background:var(--amber);border-color:var(--amber)}
   .tabs{display:flex;gap:22px;margin-top:14px;align-items:center}
   .tab{font-family:var(--display);font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;
@@ -94,15 +95,17 @@
   .empty p{font-size:15px;line-height:1.55;max-width:23em;margin:0 auto}
 
   /* ---------- fab / banners ---------- */
-  .fab{position:fixed;right:16px;bottom:calc(22px + var(--safeb));z-index:30;background:var(--amber);
-    color:#1B1208;border:0;border-radius:27px;height:54px;padding:0 24px;font-family:var(--display);
-    font-size:13px;letter-spacing:.16em;text-transform:uppercase;box-shadow:0 8px 26px rgba(0,0,0,.55)}
+  .fab{position:fixed;right:18px;bottom:calc(24px + var(--safeb));z-index:30;background:var(--amber);
+    color:#1B1208;border:0;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;
+    justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+  .fab svg{display:block}
   .fab:active{transform:translateY(1px)}
-  .viewbanner{position:fixed;left:12px;right:12px;bottom:calc(20px + var(--safeb));z-index:30;
-    background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
-    display:flex;align-items:center;gap:12px;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+  [hidden]{display:none!important}
+  .viewbanner{display:flex;align-items:center;gap:12px;margin:14px 12px 0;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:11px 12px 11px 15px}
+  .viewbanner svg{color:var(--muted);flex:none}
   .viewbanner p{margin:0;flex:1;font-family:var(--util);font-size:10.5px;color:var(--muted);
-    letter-spacing:.06em;text-transform:uppercase;line-height:1.5}
+    letter-spacing:.08em;text-transform:uppercase;line-height:1.4}
   .viewbanner button{background:var(--amber);color:#1B1208;border:0;border-radius:9px;padding:9px 13px;
     font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
   .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(92px + var(--safeb));
@@ -134,6 +137,8 @@
   .btn{background:none;border:1px solid var(--line);border-radius:11px;font-family:var(--display);
     font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;padding:13px 12px;width:100%;margin-bottom:9px}
   .btn:active{background:var(--panel-2)}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px}
+  .btn svg{flex:none;opacity:.85}
   .btn.primary{background:var(--amber);border-color:var(--amber);color:#1B1208;padding:16px;font-size:13px;margin-top:4px}
   .btn.danger{border-color:#7A3527;color:var(--red)}
   .btn.sm{padding:10px;font-size:10.5px;margin-bottom:0}
@@ -205,8 +210,12 @@
     <div class="rack" id="rack"></div>
     <div class="searchrow">
       <input id="q" type="search" placeholder="Search beer, brewery or style" autocomplete="off" enterkeyhint="search">
-      <button class="iconbtn" id="btnFilters">Filter<b id="fcount" style="display:none"></b></button>
-      <button class="iconbtn" id="btnSettings" aria-label="Settings and backups">•••</button>
+      <button class="iconbtn" id="btnFilters" aria-label="Filters">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+        <b id="fcount" style="display:none"></b></button>
+      <button class="iconbtn" id="btnSettings" aria-label="Settings and backups">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.8v2.4M12 18.8v2.4M4.5 4.5l1.7 1.7M17.8 17.8l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.5 19.5l1.7-1.7M17.8 6.2l1.7-1.7"/></svg>
+      </button>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="best">By rating</button>
@@ -215,15 +224,19 @@
     </div>
   </header>
 
+  <div class="viewbanner" id="viewbanner" hidden>
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+    <p>Viewing mode — browse only</p>
+    <button id="exitView">Exit</button>
+  </div>
+
   <div class="summary" id="summary"></div>
   <ul id="list"></ul>
   <div class="empty" id="empty" hidden></div>
 
-  <button class="fab" id="fab">+ Add beer</button>
-  <div class="viewbanner" id="viewbanner" hidden>
-    <p>Viewing mode — browse only, nothing can be changed.</p>
-    <button id="exitView">Exit</button>
-  </div>
+  <button class="fab" id="fab" aria-label="Add beer">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -291,7 +304,7 @@
       <div class="photo">
         <div class="art" id="f-art"></div>
         <div style="flex:1;min-width:0">
-          <button class="btn sm" id="btnPhoto" style="margin-bottom:8px">Take or choose photo</button>
+          <button class="btn sm" id="btnPhoto" style="margin-bottom:8px"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8.5h3.2L8 6h8l1.8 2.5H21v11H3v-11Z" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.4"/></svg>Photo</button>
           <button class="btn sm" id="btnClearImg" hidden>Remove image</button>
         </div>
       </div>
@@ -301,8 +314,8 @@
     </div>
   </div>
 
-  <button class="btn primary" id="btnSave">Save</button>
-  <button class="btn" id="btnCancel">Cancel</button>
+  <button class="btn primary" id="btnSave"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg><span id="saveLabel">Save</span></button>
+  <button class="btn" id="btnCancel"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Cancel</button>
 </div>
 
 <!-- DETAIL -->
@@ -310,11 +323,11 @@
   <div class="grab"></div>
   <div id="detailBody"></div>
   <div id="detailActions">
-    <button class="btn" id="btnNewTasting">Add another tasting</button>
-    <button class="btn" id="btnEdit">Edit beer details</button>
-    <button class="btn danger" id="btnDelete">Delete this beer</button>
+    <button class="btn" id="btnNewTasting"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Another tasting</button>
+    <button class="btn" id="btnEdit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M14.5 6.5 17.5 9.5"/></svg>Edit beer</button>
+    <button class="btn danger" id="btnDelete"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M9.5 7V5h5v2M6.5 7l1 13h9l1-13M10.5 10.5v6M13.5 10.5v6"/></svg>Delete</button>
   </div>
-  <button class="btn" id="btnCloseDetail">Close</button>
+  <button class="btn" id="btnCloseDetail"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Close</button>
 </div>
 
 <!-- DUPLICATE -->
@@ -359,15 +372,15 @@
   <div class="hint">Applies when a beer has been tasted more than once. The list header always says which one is in use.</div>
   <label for="set-name">Your name on the header</label>
   <input id="set-name" placeholder="Eren">
-  <button class="btn" id="set-view">Enter viewing mode</button>
+  <button class="btn" id="set-view"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>Show to a friend</button>
   <div class="hint">Hides every editing control so you can hand your phone to a friend.</div>
   <label style="margin-top:6px">Your data</label>
-  <button class="btn" id="set-csv">Export CSV</button>
-  <button class="btn" id="set-json">Export JSON backup</button>
-  <button class="btn" id="set-import">Import a JSON backup</button>
+  <button class="btn" id="set-csv"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg>Export CSV</button>
+  <button class="btn" id="set-json"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg>Export JSON backup</button>
+  <button class="btn" id="set-import"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 20h14"/></svg>Import a JSON backup</button>
   <input type="file" id="set-file" accept="application/json,.json" hidden>
   <div class="hint">Your log is stored on this device, in this browser. It is not synced anywhere, so export a backup now and then — especially after a big night. Clearing your browser data erases the log.</div>
-  <button class="btn" id="set-close">Close</button>
+  <button class="btn" id="set-close"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Close</button>
 </div>
 
 <script>
@@ -513,7 +526,7 @@ function render(){
   const e=$("empty"); e.hidden = list.length>0;
   e.innerHTML = db.beers.length
     ? `<p>No beers match that. <button class="btn sm" id="clearAll" style="width:auto;display:inline-block;margin-top:14px">Clear search and filters</button></p>`
-    : `<p>Nothing poured yet. Tap <b>Add beer</b>, type the name, slide the glass to a rating — that's all it takes.</p>`;
+    : `<p>Nothing poured yet. Tap the <b>+</b> button, type a name, slide the glass to a rating — that's all it takes.</p>`;
   const ca=$("clearAll"); if(ca) ca.onclick=()=>{ $("q").value=""; filters={style:"",brewery:"",min:0,again:""}; render(); };
 
   // datalists
@@ -571,7 +584,7 @@ function openForm(mode){
   $("discBtn").hidden = openDetails;
   $("discBtn").setAttribute("aria-expanded", String(openDetails));
   $("discIcon").textContent = "+";
-  $("btnSave").textContent = mode.type==="new" ? "Save to the log" : "Save changes";
+  $("saveLabel").textContent = mode.type==="new" ? "Save to the log" : "Save changes";
   open($("formSheet"));
   if(mode.type==="new") setTimeout(()=>$("f-name").focus(), 320);
 }
