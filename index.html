@@ -1,3 +1,7 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -135,6 +139,7 @@
   input:focus,select:focus,textarea:focus{outline:2px solid var(--amber);outline-offset:1px}
   .row{display:flex;gap:12px}
   .row>div{flex:1;min-width:0}
+  .row>div.wide{flex:2}
   .btn{background:none;border:1px solid var(--line);border-radius:11px;font-family:var(--display);
     font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;padding:13px 12px;width:100%;margin-bottom:9px}
   .btn:active{background:var(--panel-2)}
@@ -212,8 +217,9 @@
   .trow .s{font-family:var(--display);font-size:16px;color:var(--amber)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-
-<div class="wrap">
+</head>
+<body>
+<div class="wrap" id="appRoot">
   <header>
     <div class="brand"><h1>Pour Log</h1><div class="sub">a tasting record</div></div>
     <p class="byline" id="byline">Beers tasted, rated and remembered.</p>
@@ -250,10 +256,10 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="scrim" id="scrim"></div>
+<div class="scrim" id="scrim" tabindex="-1"></div>
 
 <!-- ADD / EDIT -->
-<div class="sheet" id="formSheet">
+<div class="sheet" id="formSheet" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-hidden="true">
   <div class="grab"></div>
   <h2 id="formTitle">Add a beer</h2>
 
@@ -282,7 +288,7 @@
   <div id="detailsBlock" hidden>
     <div id="beerDetailFields">
       <div class="row">
-        <div><label for="f-brewery">Brewery</label><input id="f-brewery" list="breweryNames" autocomplete="off"><datalist id="breweryNames"></datalist></div>
+        <div class="wide"><label for="f-brewery">Brewery</label><input id="f-brewery" list="breweryNames" autocomplete="off"><datalist id="breweryNames"></datalist></div>
         <div><label for="f-abv">ABV %</label><input id="f-abv" inputmode="decimal" autocomplete="off"></div>
       </div>
       <div class="chips" id="chipsBrewery"></div>
@@ -323,12 +329,13 @@
     </div>
   </div>
 
+  <button class="btn danger" id="btnDelTasting" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M9.5 7V5h5v2M6.5 7l1 13h9l1-13M10.5 10.5v6M13.5 10.5v6"/></svg>Delete this tasting</button>
   <button class="btn primary" id="btnSave"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg><span id="saveLabel">Save</span></button>
   <button class="btn" id="btnCancel"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Cancel</button>
 </div>
 
 <!-- DETAIL -->
-<div class="sheet" id="detailSheet">
+<div class="sheet" id="detailSheet" role="dialog" aria-modal="true" aria-label="Beer details" aria-hidden="true">
   <div class="grab"></div>
   <div id="detailBody"></div>
   <div id="detailActions">
@@ -340,9 +347,9 @@
 </div>
 
 <!-- DUPLICATE -->
-<div class="sheet" id="dupSheet">
+<div class="sheet" id="dupSheet" role="dialog" aria-modal="true" aria-labelledby="dupTitle" aria-hidden="true">
   <div class="grab"></div>
-  <h2>Already in the log</h2>
+  <h2 id="dupTitle">Already in the log</h2>
   <p class="notes" id="dupText"></p>
   <button class="btn primary" id="dupAdd">Add another tasting</button>
   <button class="btn" id="dupEdit">Open the existing beer</button>
@@ -350,9 +357,9 @@
 </div>
 
 <!-- FILTERS -->
-<div class="sheet" id="filterSheet">
+<div class="sheet" id="filterSheet" role="dialog" aria-modal="true" aria-labelledby="filterTitle" aria-hidden="true">
   <div class="grab"></div>
-  <h2>Filters</h2>
+  <h2 id="filterTitle">Filters</h2>
   <label for="fl-style">Style</label>
   <select id="fl-style"></select>
   <label for="fl-brewery">Brewery</label>
@@ -370,9 +377,9 @@
 </div>
 
 <!-- SETTINGS / DATA -->
-<div class="sheet" id="settingsSheet">
+<div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
   <div class="grab"></div>
-  <h2>Settings &amp; backups</h2>
+  <h2 id="settingsTitle">Settings &amp; backups</h2>
   <label>Rank beers by</label>
   <div class="seg" id="set-rank">
     <button type="button" data-v="latest" aria-pressed="true">Latest rating</button>
@@ -396,7 +403,7 @@
 
 <script>
 "use strict";
-const BUILD = 7;
+const BUILD = 8;
 const $ = id => document.getElementById(id);
 const WORDS={0:"pass",0.5:"pass",1:"rough",1.5:"rough",2:"meh",2.5:"okay",3:"solid",3.5:"good",4:"great",4.5:"excellent",5:"top shelf"};
 const BASE_STYLES=["Pilsner","Lager","Helles","Pale ale","IPA","Hazy IPA","Wheat","Saison","Amber",
@@ -423,6 +430,7 @@ async function load(){
       db.settings = Object.assign({rank:"latest",owner:"Eren"}, d.settings||{}); }
     images = JSON.parse(localStorage.getItem(IMGKEY) || "{}");
   }catch(e){ images = {}; }
+  db.tastings.forEach((t,i)=>{ if(!t.createdAt) t.createdAt = i+1; });
   render();
 }
 async function save(){
@@ -436,7 +444,10 @@ async function save(){
   }
 }
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const today = () => new Date().toISOString().slice(0,10);
+const today = () => {            // local calendar date, not UTC
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
 
 /* ============ shared catalogue (read-only) ============ */
 async function loadCatalogue(){
@@ -462,7 +473,8 @@ function catLookup(name){
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = n => Number(n).toFixed(1);   // always one decimal: 4.0 / 5
 function fmtDate(d){ if(!d) return ""; const p=d.split("-"); return +p[2]+" "+SHORT[+p[1]-1]+" "+p[0].slice(2); }
-function tastingsOf(id){ return db.tastings.filter(t=>t.beerId===id).sort((a,b)=>(b.date||"").localeCompare(a.date||"")); }
+function byRecency(a,b){ return (b.date||"").localeCompare(a.date||"") || (b.createdAt||0)-(a.createdAt||0); }
+function tastingsOf(id){ return db.tastings.filter(t=>t.beerId===id).sort(byRecency); }
 function isRated(id){ return db.tastings.some(t=>t.beerId===id); }
 function scoreOf(id){
   const t = tastingsOf(id); if(!t.length) return 0;
@@ -521,7 +533,9 @@ function render(){
   if(db.beers.length){
     const scores = db.beers.map(b=>scoreOf(b.id));
     const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
-    const counts={}; db.beers.forEach(b=>{ const s=(b.style||"").trim(); if(s) counts[s]=(counts[s]||0)+1; });
+    const counts={};
+    db.tastings.forEach(t=>{ const b=db.beers.find(x=>x.id===t.beerId); const v=(b&&b.style||"").trim();
+      if(v) counts[v]=(counts[v]||0)+1; });
     const common = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
     $("summary").innerHTML = `
       <div><b>${db.beers.length}</b>beers</div>
@@ -532,32 +546,52 @@ function render(){
 
   const list = visible();
   list.sort((a,b)=> view==="best"
-    ? (isRated(b.id)-isRated(a.id)) || scoreOf(b.id)-scoreOf(a.id) || (lastDate(b.id)||"").localeCompare(lastDate(a.id)||"")
-    : (lastDate(b.id)||"").localeCompare(lastDate(a.id)||"") || scoreOf(b.id)-scoreOf(a.id));
+    ? (isRated(b.id)-isRated(a.id)) || scoreOf(b.id)-scoreOf(a.id) || byRecency({date:lastDate(a.id)},{date:lastDate(b.id)})
+    : 0);
 
   $("rack").innerHTML = list.slice(0,44).map(b=>`<i><b style="height:${scoreOf(b.id)/5*100}%"></b></i>`).join("");
 
   let html="", month="";
-  list.forEach((b,i)=>{
-    if(view==="date"){
-      const d=lastDate(b.id), m = d ? MONTHS[+d.split("-")[1]-1]+" "+d.split("-")[0] : "No date";
+  if(view==="best"){
+    list.forEach((b,i)=>{
+      const s = scoreOf(b.id), tc = tastingsOf(b.id).length;
+      const meta = [b.brewery, b.style, b.abv?b.abv+"%":""].filter(Boolean).join(" · ") || "No details yet";
+      const when = (lastDate(b.id) ? (tc>1?"Last tasted ":"Tasted ")+fmtDate(lastDate(b.id)) : "Not rated yet — tap to rate")
+                 + (tc>1?` · ${tc} tastings`:"");
+      html += `<li><button class="card" data-id="${b.id}">
+        <div class="rank">${isRated(b.id)?"#"+(i+1):""}</div>
+        ${artHTML(b)}
+        <div><span class="name">${esc(b.name)}${againOf(b.id)==="yes"?'<i class="again" title="Would drink again"></i>':""}</span>
+          <span class="meta">${esc(meta)}</span><span class="when">${esc(when)}</span></div>
+        <div class="rating"><div class="glass"><span style="height:${s/5*100}%"></span></div>
+          <div class="score">${isRated(b.id)?num(s)+'<em>/ 5</em>':'—<em>rate it</em>'}</div></div>
+      </button></li>`;
+    });
+  } else {
+    // one row per tasting, newest first
+    const ids = new Set(list.map(b=>b.id));
+    const tl = db.tastings.filter(t=>ids.has(t.beerId))
+                          .filter(t=>!filters.min || t.rating>=filters.min)
+                          .sort(byRecency);
+    tl.forEach(t=>{
+      const b = db.beers.find(x=>x.id===t.beerId); if(!b) return;
+      const m = t.date ? MONTHS[+t.date.split("-")[1]-1]+" "+t.date.split("-")[0] : "No date";
       if(m!==month){ month=m; html += `<div class="monthhead">${esc(m)}</div>`; }
-    }
-    const s = scoreOf(b.id), tc = tastingsOf(b.id).length;
-    const meta = [b.brewery, b.style, b.abv?b.abv+"%":""].filter(Boolean).join(" · ") || "No details yet";
-    const when = (lastDate(b.id) ? (tc>1?"Last tasted ":"Tasted ")+fmtDate(lastDate(b.id)) : "Not rated yet — tap to rate") + (tc>1?` · ${tc} tastings`:"");
-    html += `<li><button class="card" data-id="${b.id}">
-      ${view==="best"?`<div class="rank">${isRated(b.id)?"#"+(i+1):""}</div>`:`<div class="rank"></div>`}
-      ${artHTML(b)}
-      <div><span class="name">${esc(b.name)}${againOf(b.id)==="yes"?'<i class="again" title="Would drink again"></i>':""}</span>
-        <span class="meta">${esc(meta)}</span><span class="when">${esc(when)}</span></div>
-      <div class="rating"><div class="glass"><span style="height:${s/5*100}%"></span></div>
-        <div class="score">${isRated(b.id)?num(s)+'<em>/ 5</em>':'—<em>rate it</em>'}</div></div>
-    </button></li>`;
-  });
+      const meta = [b.brewery, b.style].filter(Boolean).join(" · ") || "No details yet";
+      const when = [fmtDate(t.date), t.loc, t.again==="yes"?"would repeat":""].filter(Boolean).join(" · ");
+      html += `<li><button class="card" data-id="${b.id}" data-t="${t.id}">
+        <div class="rank"></div>
+        ${artHTML(b)}
+        <div><span class="name">${esc(b.name)}</span>
+          <span class="meta">${esc(meta)}</span><span class="when">${esc(when)}</span></div>
+        <div class="rating"><div class="glass"><span style="height:${t.rating/5*100}%"></span></div>
+          <div class="score">${num(t.rating)}<em>/ 5</em></div></div>
+      </button></li>`;
+    });
+  }
   $("list").innerHTML = html;
 
-  const e=$("empty"); e.hidden = list.length>0;
+  const e=$("empty"); e.hidden = html.length>0;
   e.innerHTML = db.beers.length
     ? `<p>No beers match that. <button class="btn sm" id="clearAll" style="width:auto;display:inline-block;margin-top:14px">Clear search and filters</button></p>`
     : `<p>Nothing poured yet. Tap the <b>+</b> button, type a name, slide the glass to a rating — that's all it takes.</p>`;
@@ -589,9 +623,28 @@ function render(){
 }
 
 /* ================= sheets ================= */
-function open(el){ $("scrim").classList.add("on"); el.classList.add("on"); }
-function closeAll(){ $("scrim").classList.remove("on");
-  ["formSheet","detailSheet","dupSheet","filterSheet","settingsSheet"].forEach(i=>$(i).classList.remove("on")); }
+const SHEETS = ["formSheet","detailSheet","dupSheet","filterSheet","settingsSheet"];
+let lastFocus = null;
+function open(el){
+  lastFocus = document.activeElement;
+  $("scrim").classList.add("on");
+  el.classList.add("on");
+  el.setAttribute("aria-hidden","false");
+  $("appRoot").setAttribute("aria-hidden","true");
+  const first = el.querySelector("input:not([type=hidden]), textarea, select, button:not([disabled])");
+  if(first) setTimeout(()=>{ try{ first.focus({preventScroll:true}); }catch(e){} }, 300);
+}
+function closeAll(){
+  $("scrim").classList.remove("on");
+  SHEETS.forEach(i=>{ $(i).classList.remove("on"); $(i).setAttribute("aria-hidden","true"); });
+  $("appRoot").removeAttribute("aria-hidden");
+  if(lastFocus && document.contains(lastFocus)){ try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
+  lastFocus = null;
+}
+document.addEventListener("keydown", e => {
+  if(e.key !== "Escape") return;
+  if(SHEETS.some(i=>$(i).classList.contains("on"))) closeAll();
+});
 $("scrim").onclick=closeAll; $("btnCancel").onclick=closeAll; $("btnCloseDetail").onclick=closeAll; $("set-close").onclick=closeAll;
 $("buildStamp").textContent = "Pour Log · build " + BUILD;
 $("q").oninput = render;
@@ -599,7 +652,12 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", String(x===t)));
   view=t.dataset.view; render();
 });
-$("rankmode").onclick = async ()=>{ db.settings.rank = db.settings.rank==="average"?"latest":"average"; await save(); render(); };
+$("rankmode").onclick = async ()=>{
+  const before = db.settings.rank;
+  db.settings.rank = before==="average"?"latest":"average";
+  if(!(await save())){ db.settings.rank = before; return; }
+  render();
+};
 
 /* ================= form ================= */
 function segSet(el, v){ el.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v===v))); }
@@ -638,6 +696,7 @@ function openForm(mode){
   $("discBtn").hidden = openDetails;
   $("discBtn").setAttribute("aria-expanded", String(openDetails));
   $("discIcon").textContent = "+";
+  $("btnDelTasting").hidden = mode.type!=="editTasting";
   $("saveLabel").textContent = mode.type==="new" ? "Save to the log" : "Save changes";
   open($("formSheet"));
   if(mode.type==="new") setTimeout(()=>$("f-name").focus(), 320);
@@ -755,6 +814,18 @@ $("f-file").onchange = e => {
 function setHint(t,warn){ $("imgHint").textContent=t; $("imgHint").className="hint"+(warn?" warn":""); }
 
 /* --- save --- */
+$("btnDelTasting").onclick = async () => {
+  const m = formMode; if(!m || m.type!=="editTasting") return;
+  const t = db.tastings.find(x=>x.id===m.tastingId); if(!t) return;
+  const b = db.beers.find(x=>x.id===t.beerId);
+  const left = tastingsOf(t.beerId).length - 1;
+  if(!confirm(`Delete this tasting of ${b?b.name:"the beer"} from ${fmtDate(t.date)}?`+
+    (left ? "" : " The beer stays in your log, with no rating."))) return;
+  const backup = db.tastings.slice();
+  db.tastings = db.tastings.filter(x=>x.id!==m.tastingId);
+  if(!(await save())){ db.tastings = backup; toast("Couldn't delete — try again"); return; }
+  closeAll(); render(); toast("Tasting deleted");
+};
 $("btnSave").onclick = () => saveForm(false);
 async function saveForm(skipDupCheck){
   const m = formMode;
@@ -766,39 +837,46 @@ async function saveForm(skipDupCheck){
       const dup = db.beers.find(b=>b.name.trim().toLowerCase()===name.toLowerCase());
       if(dup){ pendingDup=dup.id; $("dupText").textContent =
         `${dup.name}${dup.brewery?" — "+dup.brewery:""} is already in your log with ${tastingsOf(dup.id).length} tasting(s). You can log tonight's pour as a new tasting, or open the beer to change its details.`;
-        $("formSheet").classList.remove("on"); open($("dupSheet")); return; }
+        $("formSheet").classList.remove("on"); $("formSheet").setAttribute("aria-hidden","true");
+        open($("dupSheet")); return; }
     }
     const beer = {id:uid(), name, brewery:$("f-brewery").value.trim(), style:$("f-style").value.trim(),
       abv:$("f-abv").value.trim(), img:null};
     await attachImage(beer);
     db.beers.push(beer);
     db.tastings.push(newTastingRecord(beer.id));
-    await save(); closeAll(); render(); toast("Saved · "+num(parseFloat($("f-rate").value))+"/5");
+    if(!(await save())){ db.beers.pop(); db.tastings.pop(); delete images[beer.id]; return; }
+    closeAll(); render(); toast("Saved · "+num(parseFloat($("f-rate").value))+" / 5");
     return;
   }
   if(m.type==="editBeer"){
     const beer = db.beers.find(b=>b.id===m.beerId);
     beer.name=$("f-name").value.trim()||beer.name; beer.brewery=$("f-brewery").value.trim();
     beer.style=$("f-style").value.trim(); beer.abv=$("f-abv").value.trim();
+    const before = JSON.parse(JSON.stringify(beer));
     await attachImage(beer);
-    await save(); closeAll(); render(); toast("Beer updated");
+    if(!(await save())){ Object.assign(beer, before); return; }
+    closeAll(); render(); toast("Beer updated");
     return;
   }
   if(m.type==="newTasting"){
     db.tastings.push(newTastingRecord(m.beerId));
-    await save(); closeAll(); render(); toast("Tasting added");
+    if(!(await save())){ db.tastings.pop(); return; }
+    closeAll(); render(); toast("Tasting added");
     return;
   }
   if(m.type==="editTasting"){
     const t = db.tastings.find(x=>x.id===m.tastingId);
+    const before = Object.assign({}, t);
     Object.assign(t, {rating:parseFloat($("f-rate").value), date:$("f-date").value||today(),
       loc:$("f-loc").value.trim(), notes:$("f-notes").value.trim(), again:draftAgain});
-    await save(); closeAll(); render(); toast("Tasting updated");
+    if(!(await save())){ Object.assign(t, before); return; }
+    closeAll(); render(); toast("Tasting updated");
   }
 }
 function newTastingRecord(beerId){
   return {id:uid(), beerId, rating:parseFloat($("f-rate").value), date:$("f-date").value||today(),
-    loc:$("f-loc").value.trim(), notes:$("f-notes").value.trim(), again:draftAgain};
+    loc:$("f-loc").value.trim(), notes:$("f-notes").value.trim(), again:draftAgain, createdAt:Date.now()};
 }
 async function attachImage(beer){
   if(draftImg && draftImg.kind==="data"){ images[beer.id]=draftImg.value; beer.img="local"; }
@@ -810,7 +888,7 @@ async function attachImage(beer){
 $("dupAdd").onclick = async ()=>{ const id=pendingDup; closeAll();
   setTimeout(()=>{ openForm({type:"newTasting", beerId:id}); },200); };
 $("dupEdit").onclick = ()=>{ const id=pendingDup; closeAll(); setTimeout(()=>showDetail(id),200); };
-$("dupCancel").onclick = ()=>{ $("dupSheet").classList.remove("on"); open($("formSheet")); };
+$("dupCancel").onclick = ()=>{ $("dupSheet").classList.remove("on"); $("dupSheet").setAttribute("aria-hidden","true"); open($("formSheet")); };
 
 /* ================= detail ================= */
 $("list").onclick = e => { const c=e.target.closest(".card"); if(c) showDetail(c.dataset.id); };
@@ -833,12 +911,13 @@ function showDetail(id){
     ${latest.date?kv(ts.length>1?"Last tasted":"Tasted",fmtDate(latest.date)):""}
     ${latest.loc?kv("Where",latest.loc):""}
     ${latest.again?kv("Would drink again",latest.again==="yes"?"Yes":"No"):""}
-    ${ts.length>1?`<div class="hist"><h3>${ts.length} tastings</h3>${ts.map(t=>`
+    ${ts.length?`<div class="hist"><h3>${ts.length} tasting${ts.length>1?"s":""}</h3>${ts.map(t=>`
       <button class="trow" data-t="${t.id}" ${viewOnly?"disabled":""}>
         <div class="glass"><span style="height:${t.rating/5*100}%"></span></div>
         <div><div class="d">${esc(fmtDate(t.date))}${t.loc?" · "+esc(t.loc):""}${t.again==="yes"?" · would repeat":""}</div>
         ${t.notes?`<div class="n">${esc(t.notes)}</div>`:""}</div>
-        <div class="s">${num(t.rating)}</div></button>`).join("")}</div>`:""}`;
+        <div class="s">${num(t.rating)}</div></button>`).join("")}
+      <div class="hint" style="margin:12px 0 0">Tap a tasting to edit or delete it.</div></div>`:""}`;
   $("detailBody").querySelectorAll(".trow").forEach(r=>r.onclick=()=>{ const tid=r.dataset.t; closeAll();
     setTimeout(()=>openForm({type:"editTasting", tastingId:tid, beerId:id}),200); });
   open($("detailSheet"));
@@ -850,10 +929,13 @@ $("btnDelete").onclick = async ()=>{
   const b=db.beers.find(x=>x.id===openBeerId); if(!b) return;
   const n=tastingsOf(b.id).length;
   if(!confirm(`Delete ${b.name} and its ${n} tasting${n>1?"s":""}? This can't be undone.`)) return;
+  const bBackup=db.beers.slice(), tBackup=db.tastings.slice(), imgBackup=images[b.id];
   db.beers=db.beers.filter(x=>x.id!==b.id);
   db.tastings=db.tastings.filter(t=>t.beerId!==b.id);
   delete images[b.id];
-  await save(); closeAll(); render(); toast("Deleted");
+  if(!(await save())){ db.beers=bBackup; db.tastings=tBackup; if(imgBackup) images[b.id]=imgBackup;
+    toast("Couldn't delete — try again"); return; }
+  closeAll(); render(); toast("Deleted");
 };
 $("fab").onclick = ()=> openForm({type:"new"});
 
@@ -950,7 +1032,8 @@ $("set-file").onchange = e => {
       if(!confirm(`Import ${d.beers.length} beers and ${(d.tastings||[]).length} tastings? This replaces what's in the log now.`)) return;
       db={beers:d.beers, tastings:d.tastings||[], settings:Object.assign({rank:"latest",owner:"Eren"}, d.settings||{})};
       images=d.images||{};
-      await save(); closeAll(); render(); toast("Backup restored");
+      if(!(await save())){ toast("Import failed — nothing was changed"); return; }
+      closeAll(); render(); toast("Backup restored");
     }catch(err){ toast("That file isn't a Pour Log backup"); }
   };
   fr.readAsText(f); e.target.value="";
@@ -963,3 +1046,5 @@ if("serviceWorker" in navigator){
     .catch(()=>{});
 }
 </script>
+</body>
+</html>
